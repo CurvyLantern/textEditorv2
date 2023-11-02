@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #__next {
+    @apply h-full;
+  }
+  #__next {
+    @apply relative;
+  }
+
+  // ul[data-type="taskList"] {
+  //   list-style: none;
+  //   padding: 0;
+
+  //   p {
+  //     margin: 0;
+  //   }
+
+  //   li {
+  //     display: flex;
+
+  //     & > label {
+  //       flex: 0 0 auto;
+  //       margin-right: 0.5rem;
+  //       user-select: none;
+  //     }
+
+  //     & > div {
+  //       flex: 1 1 auto;
+  //     }
+
+  //     ul li,
+  //     ol li {
+  //       display: list-item;
+  //     }
+
+  //     ul[data-type="taskList"] > li {
+  //       display: flex;
+  //     }
+  //   }
+  // }
+  .editor_menu {
+    & > button {
+      @apply border p-1 rounded-md active:scale-95 transition-transform;
+    }
+  }
+
+  .editor_textarea {
+    @apply h-full;
+    & > .tiptap {
+      @apply h-full focus-visible:border-none outline-none p-2;
+    }
+
+    & .group {
+      @apply block bg-yellow-500 bg-opacity-10;
+      & > .item {
+        @apply pl-3  block;
+        // @apply ml-3;
+      }
+    }
+  }
+}
