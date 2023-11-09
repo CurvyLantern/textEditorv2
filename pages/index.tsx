@@ -1,5 +1,6 @@
 import BaseEditor from "@/components/editor/BaseEditor";
 import { Accordion } from "@/components/ui/Accordion";
+import { Box, Container, Stack } from "@mui/material";
 import { JSONContent, generateJSON, generateHTML } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useMemo, useState } from "react";
@@ -115,18 +116,29 @@ const organizedRecursion = (item: any[], obj: any = {}) => {
   if (!item) return obj;
   obj.title = item[0];
   obj.type = "item";
-  if (Array.isArray(item[1])) {
-    obj.type = "group";
-    obj.items = item[1].map((childItem) => {
-      const items = organizedRecursion(childItem);
-      return items;
-    });
+  for (const subItem of item.slice(1, item.length)) {
+    if (Array.isArray(subItem)) {
+      obj.type = "group";
+      obj.items = subItem.map((childItem) => {
+        const items = organizedRecursion(childItem);
+        return items;
+      });
+    } else {
+      let prevDescription =
+        typeof obj.description === "string" ? obj.description : "";
+      // obj.description = `${prevDescription} ${subItem}`;
+      obj.description = [prevDescription, subItem].join(" ");
+    }
   }
+
   return obj;
 };
 const HomePage = () => {
   const [jsonStr, setJsonStr] = useState("");
   const [json, setJson] = useState<JSONContent>();
+
+  // console.clear();
+  // console.log({ json });
   const formattedJson = useMemo(
     () => (json && json.content ? json.content[0] : []),
     [json]
@@ -145,28 +157,65 @@ const HomePage = () => {
     return organizedArr;
   }, [formattedNestedList]);
 
-  // useEffect(() => {
-  //   console.clear();
-  //   console.log(formattedNestedList, "formattedNestedList");
-  //   console.log(organizedNestedList, "organizedNestedList");
-  // }, [organizedNestedList]);
-
+  const [step, setStep] = useState(1);
+  const [initialStep, setInitialStep] = useState(1);
+  const [stepLimit, setStepLimit] = useState(3);
+  const goToPreviousStep = () => {
+    setStep(step > initialStep && step < stepLimit ? step - 1 : step);
+  };
+  const goToNextStep = () => {
+    setStep(step < stepLimit ? step + 1 : step);
+  };
   return (
-    <div className="pt-20">
-      <div className="max-w-3xl w-full mx-auto">
-        <BaseEditor
-          onUpdate={(str: string, json: JSONContent) => {
-            setJsonStr(str);
-            setJson(json);
-          }}
-        />
-      </div>
+    <div>
+      {/* <Container maxWidth="md">
+        <div className="flex items-center justify-between p-5">
+          <button
+            onClick={goToPreviousStep}
+            className="px-6 py-2 rounded-md bg-orange-500 text-white">
+            Previous
+          </button>
+          <button
+            onClick={goToNextStep}
+            className="px-6 py-2 rounded-md bg-orange-500 text-white">
+            Next
+          </button>
+        </div>
+        <div></div>
+      </Container> */}
+      <Container maxWidth={"lg"}>
+        <Box
+          sx={{
+            px: 2,
+          }}>
+          <BaseEditor
+            onUpdate={(str: string, json: JSONContent) => {
+              setJsonStr(str);
+              setJson(json);
+            }}
+          />
+        </Box>
+        <div>{JSON.stringify(formattedNestedList, null, 2)}</div>
+        {JSON.stringify(organizedNestedList, null, 2)}
 
-      {/* {JSON.stringify(formattedNestedList, null, 2)} */}
-
-      <div>
         <Accordion contents={organizedNestedList} />
-      </div>
+      </Container>
+    </div>
+  );
+};
+
+const Stepper = ({
+  activeStep,
+  step,
+  children,
+}: {
+  children: React.ReactNode;
+  activeStep: number;
+  step: number;
+}) => {
+  return (
+    <div className={`${activeStep !== step ? "hidden" : "block"} `}>
+      {children}
     </div>
   );
 };

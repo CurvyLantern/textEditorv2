@@ -1,7 +1,63 @@
 import * as RadixAccordion from "@radix-ui/react-accordion";
 import { IconChevronCompactUp, IconChevronUp } from "@tabler/icons-react";
+import * as React from "react";
+import { styled } from "@mui/material/styles";
+import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import MuiAccordion, { AccordionProps } from "@mui/material/Accordion";
+import MuiAccordionSummary, {
+  AccordionSummaryProps,
+} from "@mui/material/AccordionSummary";
+import MuiAccordionDetails from "@mui/material/AccordionDetails";
+import Typography from "@mui/material/Typography";
 
-type Content = { title: string; type: string; items: Content[] };
+export const StyledAccordion = styled((props: AccordionProps) => (
+  <MuiAccordion
+    disableGutters
+    elevation={0}
+    square
+    {...props}
+  />
+))(({ theme }) => ({
+  border: `1px solid ${theme.palette.divider}`,
+  "&:not(:last-child)": {
+    borderBottom: 0,
+  },
+  "&:before": {
+    display: "none",
+  },
+}));
+export const StyledAccordionSummary = styled((props: AccordionSummaryProps) => (
+  <MuiAccordionSummary
+    expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />}
+    {...props}
+  />
+))(({ theme }) => ({
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? "rgba(255, 255, 255, .05)"
+      : "rgba(0, 0, 0, .03)",
+  flexDirection: "row-reverse",
+  "& .MuiAccordionSummary-expandIconWrapper.Mui-expanded": {
+    transform: "rotate(90deg)",
+  },
+  "& .MuiAccordionSummary-content": {
+    marginLeft: theme.spacing(1),
+  },
+}));
+
+export const StyledAccordionDetails = styled(MuiAccordionDetails)(
+  ({ theme }) => ({
+    padding: theme.spacing(2),
+    borderTop: "1px solid rgba(0, 0, 0, .125)",
+  })
+);
+
+type Content = {
+  title: string;
+  type: string;
+  items: Content[];
+  description?: string;
+};
 
 export const AccordionGroup = ({
   item,
@@ -31,22 +87,15 @@ export const AccordionItem = ({
   children: React.ReactNode;
 }) => {
   return (
-    <RadixAccordion.Item value={item.title}>
-      <RadixAccordion.Header className="flex">
-        <RadixAccordion.Trigger className="flex-1 p-2 bg-white border text-black font-semibold flex justify-between items-center">
-          <span>
-            {item.title}
-            <span className="inline-flex items-center justify-center px-2  rounded-full bg-green-500 text-white ">
-              {item.type}
-            </span>
-          </span>
-          <span>
-            <IconChevronUp size={20} />
-          </span>
-        </RadixAccordion.Trigger>
-      </RadixAccordion.Header>
-      <RadixAccordion.Content>{children}</RadixAccordion.Content>
-    </RadixAccordion.Item>
+    <StyledAccordion>
+      <StyledAccordionSummary>
+        {item.title} {item.type}
+      </StyledAccordionSummary>
+      <StyledAccordionDetails>
+        <Typography>{item.description ? item.description : ""}</Typography>
+        <div>{children}</div>
+      </StyledAccordionDetails>
+    </StyledAccordion>
   );
 };
 
@@ -57,18 +106,11 @@ export const Accordion = ({ contents }: { contents: Content[] }) => {
         <AccordionGroup
           item={item}
           key={JSON.stringify(item)}>
-          No description here
+          {null}
         </AccordionGroup>
       );
     }
     return null;
   });
-  return (
-    <RadixAccordion.Root
-      collapsible
-      type="single"
-      className="p-3 flex flex-col gap-3">
-      {Item}
-    </RadixAccordion.Root>
-  );
+  return <div>{Item}</div>;
 };

@@ -1,9 +1,15 @@
-import { useEditor, EditorContent, JSONContent } from "@tiptap/react";
+import {
+  useEditor,
+  EditorContent,
+  JSONContent,
+  generateJSON,
+  generateHTML,
+  FloatingMenu,
+} from "@tiptap/react";
 import TaskItem from "@tiptap/extension-task-item";
 import _TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
-import { generateJSON } from "@tiptap/html";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   IconBold,
   IconBoldOff,
@@ -11,6 +17,15 @@ import {
   IconIndentDecrease,
   IconIndentIncrease,
 } from "@tabler/icons-react";
+import {
+  Button,
+  Popover,
+  Stack,
+  TextField,
+  TextareaAutosize,
+  Typography,
+  Box,
+} from "@mui/material";
 const TaskList = _TaskList.extend({
   addKeyboardShortcuts() {
     return {
@@ -18,6 +33,18 @@ const TaskList = _TaskList.extend({
     };
   },
 });
+
+const genHtml = (json: JSONContent) =>
+  json
+    ? generateHTML(json, [
+        StarterKit.configure({
+          bulletList: {
+            keepAttributes: true,
+            keepMarks: true,
+          },
+        }),
+      ])
+    : "";
 
 const BaseEditor = ({
   onUpdate,
@@ -53,6 +80,28 @@ const BaseEditor = ({
     ],
     content: ``,
   });
+
+  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const floatingButtonParentRef = useRef<HTMLDivElement>(null);
+
+  const [descriptionValue, setDescriptionValue] = useState("");
+  const [currentActivePos, setCurrentActivePos] = useState(-1);
+  const [currentActivePosEnd, setCurrentActivePosEnd] = useState(
+    currentActivePos + 1
+  );
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+    setCurrentActivePos(Number(editor?.state.selection?.$anchor?.pos!) + 1);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const open = Boolean(anchorEl);
+  const id = open ? "simple-popover" : undefined;
+
   const turnOnBulletListMode = useCallback(() => {
     if (editor?.isActive("bulletList")) {
       return;
@@ -65,13 +114,15 @@ const BaseEditor = ({
     turnOnBulletListMode();
   }, [turnOnBulletListMode]);
 
+  const [openModal, setOpenModal] = useState(false);
+
   if (!editor) {
     return null;
   }
 
   return (
     <div
-      className="border-2 rounded-md min-h-[25rem]"
+      className="border-2 border-solid border-black rounded-md min-h-[25rem]"
       onKeyDown={(evt) => {
         if (evt.code === "Tab") {
           if (!editor.isActive("bulletList")) {
@@ -103,6 +154,85 @@ const BaseEditor = ({
           <IconIndentDecrease size={15} />
         </button>
       </div>
+      <FloatingMenu
+        editor={editor}
+        tippyOptions={{ duration: 100 }}
+        shouldShow={({ editor }) => {
+          return editor.isActive("listItem") && !editor.isActive("text");
+        }}>
+        <Stack
+          ref={floatingButtonParentRef}
+          direction={"column"}
+          p={1}
+          sx={{
+            // border: "1px solid",
+            borderRadius: (t) => t.spacing(1),
+            boxShadow: (t) => t.shadows[2],
+          }}>
+          <Button
+            aria-describedby={id}
+            variant="contained"
+            onClick={handleClick}>
+            Description
+          </Button>
+        </Stack>
+        <Popover
+          elevation={0}
+          id={id}
+          open={open}
+          anchorEl={floatingButtonParentRef.current}
+          onClose={handleClose}
+          sx={{
+            padding: 0,
+            marginTop: 1,
+            boxShadow: "none",
+            border: "1px solid",
+          }}
+          anchorOrigin={{
+            vertical: "bottom",
+            horizontal: "left",
+          }}>
+          <Stack
+            spacing={1}
+            sx={{
+              width: "50vw",
+            }}>
+            <TextField
+              value={descriptionValue}
+              onChange={(v) => {
+                setDescriptionValue(v.currentTarget.value);
+              }}
+              multiline
+              placeholder="Write your description"
+            />
+            <Box>
+              <Button
+                variant="outlined"
+                color="success"
+                onClick={() => {
+                  // const pos = editor.state.selection.$anchor.pos;
+                  // const pos = currentActivePos;
+                  // console.log({ pos, currentActivePosEnd });
+                  // const from = currentActivePos;
+                  // const to = currentActivePosEnd;
+
+                  // const range = descriptionValue.length;
+                  // setCurrentActivePosEnd(range + from);
+                  // editor.commands.deleteRange({
+                  //   from,
+                  //   to,
+                  // });
+                  editor.commands.insertContentAt(
+                    currentActivePos,
+                    descriptionValue
+                  );
+                }}>
+                Done
+              </Button>
+            </Box>
+          </Stack>
+        </Popover>
+      </FloatingMenu>
       <EditorContent
         editor={editor}
         className="editor_textarea"
