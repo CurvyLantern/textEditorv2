@@ -79,7 +79,7 @@ type Node = {
   type: string;
   content: Node[];
 };
-const regex = /^:[^\s].*[^:\s]:$/;
+const regex = /^:[^\s].*/;
 function formatBulletList(node: Node, arr: any[] = []) {
   if (node.type === "bulletList") {
     // const arr: any[] = [];
@@ -100,9 +100,7 @@ function formatBulletList(node: Node, arr: any[] = []) {
 }
 
 function descriptionToNormalText(description: string) {
-  return regex.test(description)
-    ? description.slice(1, description.length - 1)
-    : description;
+  return regex.test(description) ? description.slice(1) : description;
 }
 
 function formatListItem(
@@ -140,7 +138,7 @@ function formatListItem(
           if (!item.content) continue;
           const content = genHtml(item).trim();
           const matched = regex.test(content);
-          const state = false;
+
           if (matched) {
             returnValue = arr[arr.length - 1] ? arr[arr.length - 1] : obj;
             returnValue.description = [

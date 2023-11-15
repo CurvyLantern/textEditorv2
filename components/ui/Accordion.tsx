@@ -114,7 +114,15 @@ export const Accordion = ({ contents }: { contents: Content[] }) => {
             {item.title} {item.type}
           </StyledAccordionSummary>
           <StyledAccordionDetails>
-            <Typography>{item.description ? item.description : ""}</Typography>
+            <Typography
+              component={"p"}
+              dangerouslySetInnerHTML={{
+                __html: item.description ? item.description : "",
+              }}
+              sx={{
+                whiteSpace: "pre",
+              }}
+            />
             {item.items.length > 0 ? (
               <div>
                 <Accordion contents={item.items} />
