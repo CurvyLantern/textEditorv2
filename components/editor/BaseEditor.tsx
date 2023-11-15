@@ -26,6 +26,7 @@ import {
   Typography,
   Box,
 } from "@mui/material";
+import EditorMenu from "./menu/EditorMenu";
 const TaskList = _TaskList.extend({
   addKeyboardShortcuts() {
     return {
@@ -131,9 +132,9 @@ const BaseEditor = ({
           evt.preventDefault();
         }
       }}>
-      <div className="flex items-center gap-5 p-2 border-b-2 editor_menu">
+      {/* <div className="flex items-center gap-5 p-2 border-b-2 editor_menu">
         <button
-          onClick={() => editor.commands.toggleBold()}
+          onClick={}
           className={editor.isActive("bulletList") ? "is-active" : ""}>
           <IconBold size={15} />
         </button>
@@ -153,8 +154,28 @@ const BaseEditor = ({
           disabled={!editor.can().liftListItem("listItem")}>
           <IconIndentDecrease size={15} />
         </button>
-      </div>
-      <FloatingMenu
+      </div> */}
+
+      <EditorMenu editor={editor} />
+      <Box
+        component={EditorContent}
+        sx={{
+          "& p": {
+            margin: 0,
+          },
+        }}
+        editor={editor}
+        className="editor_textarea"
+      />
+    </div>
+  );
+};
+
+export default BaseEditor;
+
+/* 
+
+ <FloatingMenu
         editor={editor}
         tippyOptions={{ duration: 100 }}
         shouldShow={({ editor }) => {
@@ -233,12 +254,5 @@ const BaseEditor = ({
           </Stack>
         </Popover>
       </FloatingMenu>
-      <EditorContent
-        editor={editor}
-        className="editor_textarea"
-      />
-    </div>
-  );
-};
 
-export default BaseEditor;
+*/

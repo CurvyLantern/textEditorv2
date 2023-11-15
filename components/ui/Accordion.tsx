@@ -100,14 +100,28 @@ export const AccordionItem = ({
 };
 
 export const Accordion = ({ contents }: { contents: Content[] }) => {
-  const Item = contents.map((item) => {
+  if (!contents || !Array.isArray(contents)) return null;
+  const Item = contents.map((item, itemIdx) => {
     if (item) {
       return (
-        <AccordionGroup
-          item={item}
-          key={JSON.stringify(item)}>
-          {null}
-        </AccordionGroup>
+        // <AccordionGroup
+        //   item={item}
+        //   key={JSON.stringify(item)}>
+        //   {null}
+        // </AccordionGroup>
+        <StyledAccordion key={itemIdx}>
+          <StyledAccordionSummary>
+            {item.title} {item.type}
+          </StyledAccordionSummary>
+          <StyledAccordionDetails>
+            <Typography>{item.description ? item.description : ""}</Typography>
+            {item.items.length > 0 ? (
+              <div>
+                <Accordion contents={item.items} />
+              </div>
+            ) : null}
+          </StyledAccordionDetails>
+        </StyledAccordion>
       );
     }
     return null;
