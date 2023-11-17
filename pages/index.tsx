@@ -8,6 +8,7 @@ import { arrayBuffer } from "stream/consumers";
 
 export type TProcessedNodeObj = {
   title: string;
+  context: "info" | "cave";
   meta: {
     infos: string[];
   };
@@ -91,6 +92,7 @@ type Node = {
 };
 const regex = /^&gt;[^\s].*/;
 const regexDescriptionDelimiter = /^&gt;/;
+const allowedContextValues = ["info", "cave"] as const;
 function formatBulletList(node: Node, arr: any[] = []) {
   if (node.type === "bulletList") {
     // const arr: any[] = [];
@@ -98,6 +100,7 @@ function formatBulletList(node: Node, arr: any[] = []) {
       const obj: TProcessedNodeObj = {
         title: "",
         description: "",
+        context: "info",
         meta: {
           infos: [],
         },
@@ -126,6 +129,7 @@ function formatListItem(
   obj: TProcessedNodeObj = {
     title: "",
     description: "",
+    context: "info",
     meta: {
       infos: [],
     },
@@ -167,8 +171,17 @@ function formatListItem(
             }
           } else {
             const contentSepareted = content.split("|");
-            obj.title += contentSepareted[0];
-
+            const titleWithContext = contentSepareted[0].trim();
+            const delimiter = ":";
+            const matchedContext = allowedContextValues.find((cxt) =>
+              titleWithContext.startsWith(`${cxt}:`)
+            );
+            if (matchedContext) {
+              obj.context = matchedContext;
+              obj.title = titleWithContext.replace(`${matchedContext}:`, "");
+            } else {
+              obj.title = titleWithContext;
+            }
             if (contentSepareted.length > 1) {
               for (let i = 1; i < contentSepareted.length; i++) {
                 const item = contentSepareted[i].trim();

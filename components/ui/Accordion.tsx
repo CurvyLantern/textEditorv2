@@ -1,16 +1,13 @@
-import * as RadixAccordion from "@radix-ui/react-accordion";
-import { IconChevronCompactUp, IconChevronUp } from "@tabler/icons-react";
-import * as React from "react";
-import { styled } from "@mui/material/styles";
+import { TProcessedNodeObj } from "@/pages";
 import ArrowForwardIosSharpIcon from "@mui/icons-material/ArrowForwardIosSharp";
+import { Stack } from "@mui/material";
 import MuiAccordion, { AccordionProps } from "@mui/material/Accordion";
+import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import MuiAccordionSummary, {
   AccordionSummaryProps,
 } from "@mui/material/AccordionSummary";
-import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
-import { Box, Chip, Stack } from "@mui/material";
-import { TProcessedNodeObj } from "@/pages";
+import { styled } from "@mui/material/styles";
 
 export const StyledAccordion = styled((props: AccordionProps) => (
   <MuiAccordion
@@ -20,7 +17,7 @@ export const StyledAccordion = styled((props: AccordionProps) => (
     {...props}
   />
 ))(({ theme }) => ({
-  border: `1px solid ${theme.palette.divider}`,
+  // border: `1px solid ${theme.palette.divider}`,
   "&:not(:last-child)": {
     borderBottom: 0,
   },
@@ -29,21 +26,22 @@ export const StyledAccordion = styled((props: AccordionProps) => (
   },
 }));
 export const StyledAccordionSummary = styled(
-  (props: AccordionSummaryProps & { showIcon: boolean }) => (
+  (
+    props: AccordionSummaryProps & { showIcon: boolean; isItemGroup: boolean }
+  ) => (
     <MuiAccordionSummary
       expandIcon={<ArrowForwardIosSharpIcon sx={{ fontSize: "0.9rem" }} />}
       {...props}
     />
   ),
   {
-    shouldForwardProp: (prop: string) => prop !== "showIcon",
+    shouldForwardProp: (prop: string) =>
+      prop !== "showIcon" && prop !== "isItemGroup",
   }
-)(({ theme, showIcon }) => ({
-  backgroundColor:
-    theme.palette.mode === "dark"
-      ? "rgba(255, 255, 255, .05)"
-      : "rgba(0, 0, 0, .03)",
+)(({ theme, showIcon, isItemGroup }) => ({
+  backgroundColor: isItemGroup ? "rgba(0, 0, 0, .1)" : "rgba(0,0,0,.03)",
   flexDirection: "row-reverse",
+  borderBottom: "1px solid rgba(0, 0, 0, .1)",
   "& .MuiAccordionSummary-expandIconWrapper": {
     display: showIcon ? "block" : "none",
     "&.Mui-expanded": {
@@ -51,6 +49,7 @@ export const StyledAccordionSummary = styled(
     },
   },
   "& .MuiAccordionSummary-content": {
+    margin: 0,
     marginLeft: theme.spacing(1),
     gap: "1rem",
     alignItems: "center",
@@ -66,59 +65,14 @@ export const StyledAccordionSummary = styled(
 export const StyledAccordionDetails = styled(MuiAccordionDetails)(
   ({ theme }) => ({
     // padding: theme.spacing(2),
-    // padding: 0,
+    padding: 0,
+    paddingLeft: theme.spacing(2),
+    border: 0,
     borderTop: "1px solid rgba(0, 0, 0, .125)",
   })
 );
 
-// type Content = {
-//   title: string;
-//   type: string;
-//   items: Content[];
-//   description?: string;
-// };
-
 type Content = TProcessedNodeObj;
-
-// export const AccordionGroup = ({
-//   item,
-//   children,
-// }: {
-//   item: Content;
-//   children: React.ReactNode;
-// }) => {
-//   if (item.type === "item") {
-//     return <AccordionItem item={item}>{children}</AccordionItem>;
-//   }
-//   if (item.type === "group") {
-//     return (
-//       <AccordionItem item={item}>
-//         <Accordion contents={item.items} />
-//       </AccordionItem>
-//     );
-//   }
-//   return null;
-// };
-
-// export const AccordionItem = ({
-//   item,
-//   children,
-// }: {
-//   item: Content;
-//   children: React.ReactNode;
-// }) => {
-//   return (
-//     <StyledAccordion>
-//       <StyledAccordionSummary>
-//         {item.title} {item.type}
-//       </StyledAccordionSummary>
-//       <StyledAccordionDetails>
-//         <Typography>{item.description ? item.description : ""}</Typography>
-//         <div>{children}</div>
-//       </StyledAccordionDetails>
-//     </StyledAccordion>
-//   );
-// };
 
 export const Accordion = ({ contents }: { contents: Content[] | null }) => {
   if (!contents || !Array.isArray(contents)) return null;
@@ -142,25 +96,22 @@ export const Accordion = ({ contents }: { contents: Content[] | null }) => {
         Boolean(item.description) &&
         typeof item.description === "string";
       return (
-        // <AccordionGroup
-        //   item={item}
-        //   key={JSON.stringify(item)}>
-        //   {null}
-        // </AccordionGroup>
         <StyledAccordion key={itemIdx}>
           <StyledAccordionSummary
+            isItemGroup={item.type === "group"}
             showIcon={item.type === "group" || hasDescription}>
-            <Typography variant="body1">{item.title}</Typography>
+            <Typography
+              variant="body1"
+              component={"p"}
+              dangerouslySetInnerHTML={{
+                __html: item.title,
+              }}
+            />
             {item.meta.infos.length > 0 ? (
               <Typography variant="subtitle2">
                 {item.meta.infos.join(",")}
               </Typography>
             ) : null}
-            {/* <Chip
-              label={item.type}
-              color="primary"
-              size="small"
-            /> */}
           </StyledAccordionSummary>
           {hasDescription ? (
             <StyledAccordionDetails

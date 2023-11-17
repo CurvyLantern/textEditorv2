@@ -15,6 +15,8 @@ import Paper from "@mui/material/Paper";
 import ToggleButton from "@mui/material/ToggleButton";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import { Editor } from "@tiptap/react";
+import FormatIndentIncreaseIcon from "@mui/icons-material/FormatIndentIncrease";
+import FormatIndentDecreaseIcon from "@mui/icons-material/FormatIndentDecrease";
 
 const StyledToggleButtonGroup = styled(ToggleButtonGroup)(({ theme }) => ({
   "& .MuiToggleButtonGroup-grouped": {
@@ -122,13 +124,13 @@ export default function EditorMenu({
           value="right"
           aria-label="right aligned"
           onClick={onToggleIndent}>
-          <FormatAlignRightIcon />
+          <FormatIndentIncreaseIcon />
         </ToggleButton>
         <ToggleButton
           value="left"
           aria-label="left aligned"
           onClick={onToggleOutdent}>
-          <FormatAlignLeftIcon />
+          <FormatIndentDecreaseIcon />
         </ToggleButton>
       </StyledToggleButtonGroup>
 

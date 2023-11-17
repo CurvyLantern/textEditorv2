@@ -165,6 +165,13 @@ const BaseEditor = ({
           sx={{
             flex: 1,
             borderRadius: (t) => t.shape.borderRadius,
+            "& .group": {
+              padding: 0,
+            },
+            "& .item": {
+              paddingLeft: (t) => t.spacing(2),
+              listStyle: "none",
+            },
             "& p": {
               margin: 0,
             },
