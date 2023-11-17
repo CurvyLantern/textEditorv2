@@ -25,6 +25,7 @@ import {
   TextareaAutosize,
   Typography,
   Box,
+  Collapse,
 } from "@mui/material";
 import EditorMenu from "./menu/EditorMenu";
 const TaskList = _TaskList.extend({
@@ -49,7 +50,9 @@ const genHtml = (json: JSONContent) =>
 
 const BaseEditor = ({
   onUpdate,
+  children,
 }: {
+  children: React.ReactNode;
   onUpdate: (str: string, json: JSONContent) => void;
 }) => {
   const editor = useEditor({
@@ -82,26 +85,7 @@ const BaseEditor = ({
     content: ``,
   });
 
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const floatingButtonParentRef = useRef<HTMLDivElement>(null);
-
-  const [descriptionValue, setDescriptionValue] = useState("");
-  const [currentActivePos, setCurrentActivePos] = useState(-1);
-  const [currentActivePosEnd, setCurrentActivePosEnd] = useState(
-    currentActivePos + 1
-  );
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-    setCurrentActivePos(Number(editor?.state.selection?.$anchor?.pos!) + 1);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  const open = Boolean(anchorEl);
-  const id = open ? "simple-popover" : undefined;
+  const [showContentBox, setShowContentBox] = useState(true);
 
   const turnOnBulletListMode = useCallback(() => {
     if (editor?.isActive("bulletList")) {
@@ -112,18 +96,28 @@ const BaseEditor = ({
   }, [editor]);
 
   useEffect(() => {
+    editor?.commands.focus(0);
     turnOnBulletListMode();
-  }, [turnOnBulletListMode]);
+  }, [editor, turnOnBulletListMode]);
 
-  const [openModal, setOpenModal] = useState(false);
+  const onToggleSplit = useCallback(() => {
+    setShowContentBox((p) => !p);
+  }, []);
 
   if (!editor) {
     return null;
   }
 
   return (
-    <div
-      className="border-2 border-solid border-black rounded-md min-h-[25rem]"
+    <Box
+      sx={{
+        boxShadow: (t) => t.shadows[1],
+        borderRadius: (t) => t.shape.borderRadius,
+        overflow: "hidden",
+        p: (t) => t.spacing(2),
+        width: "100%",
+      }}
+      // className="border-2 border-solid border-black rounded-md min-h-[25rem]"
       onKeyDown={(evt) => {
         if (evt.code === "Tab") {
           if (!editor.isActive("bulletList")) {
@@ -156,18 +150,42 @@ const BaseEditor = ({
         </button>
       </div> */}
 
-      <EditorMenu editor={editor} />
-      <Box
-        component={EditorContent}
-        sx={{
-          "& p": {
-            margin: 0,
-          },
-        }}
+      <EditorMenu
+        onToggleSplit={onToggleSplit}
         editor={editor}
-        className="editor_textarea"
       />
-    </div>
+      <Stack
+        direction={"row"}
+        spacing={2}
+        sx={{
+          py: (t) => t.spacing(2),
+        }}>
+        <Box
+          component={EditorContent}
+          sx={{
+            flex: 1,
+            borderRadius: (t) => t.shape.borderRadius,
+            "& p": {
+              margin: 0,
+            },
+          }}
+          editor={editor}
+          className="editor_textarea"
+        />
+        {showContentBox ? (
+          <Box
+            sx={{
+              flex: 1,
+              p: 2,
+              border: "1px solid",
+              borderColor: (t) => t.palette.grey[200],
+              borderRadius: (t) => t.shape.borderRadius,
+            }}>
+            {children}
+          </Box>
+        ) : null}
+      </Stack>
+    </Box>
   );
 };
 

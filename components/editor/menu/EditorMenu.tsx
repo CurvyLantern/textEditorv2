@@ -6,6 +6,7 @@ import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
 import FormatAlignJustifyIcon from "@mui/icons-material/FormatAlignJustify";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
+import VerticalSplitIcon from "@mui/icons-material/VerticalSplit";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import FormatColorFillIcon from "@mui/icons-material/FormatColorFill";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
@@ -37,6 +38,7 @@ type TEditorMenuProps = {
   // onToggleIndent: () => void;
   // onToggleOutdent: () => void;
   editor: Editor | null;
+  onToggleSplit: () => void;
 };
 export default function EditorMenu({
   // onToggleBold,
@@ -44,10 +46,11 @@ export default function EditorMenu({
   // onToggleItalic,
   // onToggleOutdent,
   editor,
+  onToggleSplit,
 }: TEditorMenuProps) {
   const [alignment, setAlignment] = React.useState("left");
   const [formats, setFormats] = React.useState(() => ["italic"]);
-
+  const [splitter, setSplitter] = React.useState(() => ["split"]);
   const handleFormat = (
     event: React.MouseEvent<HTMLElement>,
     newFormats: string[]
@@ -62,6 +65,13 @@ export default function EditorMenu({
     setAlignment(newAlignment);
   };
 
+  const handleSplitter = (
+    event: React.MouseEvent<HTMLElement>,
+    newSplitter: string[]
+  ) => {
+    setSplitter(newSplitter);
+  };
+
   const onToggleBold = () => editor?.commands.toggleBold();
   const onToggleItalic = () => editor?.commands.toggleItalic();
   const onToggleIndent = () =>
@@ -74,6 +84,8 @@ export default function EditorMenu({
       elevation={0}
       sx={{
         display: "flex",
+        px: (t) => t.spacing(1),
+        py: (t) => t.spacing(0.5),
         border: (theme) => `1px solid ${theme.palette.divider}`,
         flexWrap: "wrap",
       }}>
@@ -117,6 +129,22 @@ export default function EditorMenu({
           aria-label="left aligned"
           onClick={onToggleOutdent}>
           <FormatAlignLeftIcon />
+        </ToggleButton>
+      </StyledToggleButtonGroup>
+
+      <StyledToggleButtonGroup
+        value={splitter}
+        onChange={handleSplitter}
+        sx={{
+          marginLeft: "auto",
+        }}
+        size="small"
+        aria-label="text formatting">
+        <ToggleButton
+          onClick={onToggleSplit}
+          value="split"
+          aria-label="split content">
+          <VerticalSplitIcon />
         </ToggleButton>
       </StyledToggleButtonGroup>
     </Paper>

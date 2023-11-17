@@ -6,6 +6,16 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect, useMemo, useState } from "react";
 import { arrayBuffer } from "stream/consumers";
 
+export type TProcessedNodeObj = {
+  title: string;
+  meta: {
+    infos: string[];
+  };
+  description: string;
+  items: TProcessedNodeObj[];
+  type: "group" | "item";
+};
+
 const genHtml = (json: JSONContent) =>
   json
     ? generateHTML(json, [
@@ -79,18 +89,23 @@ type Node = {
   type: string;
   content: Node[];
 };
-const regex = /^:[^\s].*/;
+const regex = /^&gt;[^\s].*/;
+const regexDescriptionDelimiter = /^&gt;/;
 function formatBulletList(node: Node, arr: any[] = []) {
   if (node.type === "bulletList") {
     // const arr: any[] = [];
     for (const item of node.content) {
-      const obj = {
+      const obj: TProcessedNodeObj = {
         title: "",
         description: "",
+        meta: {
+          infos: [],
+        },
         items: [],
+        type: "item",
       };
       const v = formatListItem(item, obj, arr);
-      if (v) {
+      if (v && v.title) {
         arr.push(v);
       }
     }
@@ -100,39 +115,37 @@ function formatBulletList(node: Node, arr: any[] = []) {
 }
 
 function descriptionToNormalText(description: string) {
-  return regex.test(description) ? description.slice(1) : description;
+  // return regex.test(description) ? description.slice(1) : description;
+  return regex.test(description)
+    ? description.replace(regexDescriptionDelimiter, "")
+    : description;
 }
 
 function formatListItem(
   node: Node,
-  obj: {
-    title: string;
-    description: string;
-    items: any[];
-  } = {
+  obj: TProcessedNodeObj = {
     title: "",
     description: "",
+    meta: {
+      infos: [],
+    },
     items: [],
+    type: "item",
   },
   arr: any[]
 ) {
   try {
     if (node.type === "listItem") {
-      // const arr: any[] = [];
-
-      // const descriptionNode = node.content[0];
-      // if (descriptionNode.type === "paragraph") {
-      //   const content = genHtml(descriptionNode);
-      //   if (regex.test(content)) {
-      //     const prevNode = arr[arr.length - 1];
-      //     prevNode.description += " " + content;
-      //   }
-      // }
       let isDescriptionNode = false;
       let returnValue = obj;
       for (const item of node.content) {
         if (item.type === "bulletList") {
           const v = formatBulletList(item);
+          if (returnValue.type === "item") {
+            returnValue.type = "group";
+            returnValue.description = "";
+          }
+
           returnValue.items = v ? v : [];
         } else {
           if (!item.content) continue;
@@ -153,9 +166,17 @@ function formatListItem(
               isDescriptionNode = false;
             }
           } else {
-            obj.title += content;
+            const contentSepareted = content.split("|");
+            obj.title += contentSepareted[0];
+
+            if (contentSepareted.length > 1) {
+              for (let i = 1; i < contentSepareted.length; i++) {
+                const item = contentSepareted[i].trim();
+                const infos = item.split(",").map((s) => s.trim());
+                obj.meta.infos.push(...infos);
+              }
+            }
           }
-          // arr.push(content);
         }
       }
       return isDescriptionNode ? null : returnValue;
@@ -168,8 +189,9 @@ function formatListItem(
 }
 
 const converter = (obj: any) => {
-  console.clear();
-  console.log(obj);
+  if (!obj) return;
+  // console.clear();
+  // console.log(obj);
   const temple = formatBulletList(obj);
   return temple;
 };
@@ -195,52 +217,14 @@ const organizedRecursion = (item: any[], obj: any = {}) => {
   return obj;
 };
 const HomePage = () => {
-  const [jsonStr, setJsonStr] = useState("");
   const [json, setJson] = useState<JSONContent>();
 
-  // console.clear();
-  // console.log({ json });
-  const formattedJson = useMemo(
-    () => (json && json.content ? json.content[0] : []),
-    [json]
-  );
   const formattedNestedList = useMemo(() => {
+    if (!json) return null;
+    const formattedJson = Array.isArray(json.content) && json.content[0];
     return converter(formattedJson);
-  }, [formattedJson]);
+  }, [json]);
 
-  const organizedNestedList = useMemo(() => {
-    if (!formattedNestedList) return [];
-    const organizedArr = [];
-    const regex = /^:[^\s].*[^:\s]:$/;
-    for (const [itemIdx, item] of formattedNestedList.entries()) {
-      const itemContent = item[0];
-
-      if (typeof itemContent === "string" && regex.test(itemContent)) {
-        const prevDescription =
-          organizedArr[organizedArr.length - 1].description;
-
-        organizedArr[organizedArr.length - 1].description = [
-          prevDescription ?? "",
-          itemContent.slice(1, itemContent.length - 1),
-        ].join(" ");
-      } else {
-        const obj = organizedRecursion(item);
-
-        organizedArr.push(obj);
-      }
-    }
-    return organizedArr;
-  }, [formattedNestedList]);
-
-  const [step, setStep] = useState(1);
-  const [initialStep, setInitialStep] = useState(1);
-  const [stepLimit, setStepLimit] = useState(3);
-  const goToPreviousStep = () => {
-    setStep(step > initialStep && step < stepLimit ? step - 1 : step);
-  };
-  const goToNextStep = () => {
-    setStep(step < stepLimit ? step + 1 : step);
-  };
   return (
     <Box sx={{ py: (t) => t.spacing(5) }}>
       <Container maxWidth={"lg"}>
@@ -250,23 +234,17 @@ const HomePage = () => {
             md: "row",
             xs: "column",
           }}>
-          <Box
-            sx={{
-              px: 2,
-              flex: 1,
+          <BaseEditor
+            onUpdate={(str: string, json: JSONContent) => {
+              setJson(json);
             }}>
-            <BaseEditor
-              onUpdate={(str: string, json: JSONContent) => {
-                setJsonStr(str);
-                setJson(json);
-              }}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
             <Accordion
               contents={formattedNestedList ? formattedNestedList : []}
             />
-          </Box>
+          </BaseEditor>
+          {/* <Box sx={{ flex: 1 }}>
+          
+          </Box> */}
         </Stack>
         <pre>
           <code>{JSON.stringify(formattedNestedList, null, 2)}</code>
@@ -274,22 +252,6 @@ const HomePage = () => {
         {/* {JSON.stringify(organizedNestedList, null, 2)} */}
       </Container>
     </Box>
-  );
-};
-
-const Stepper = ({
-  activeStep,
-  step,
-  children,
-}: {
-  children: React.ReactNode;
-  activeStep: number;
-  step: number;
-}) => {
-  return (
-    <div className={`${activeStep !== step ? "hidden" : "block"} `}>
-      {children}
-    </div>
   );
 };
 
