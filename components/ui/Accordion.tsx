@@ -163,8 +163,10 @@ export const Accordion = ({ contents }: { contents: Content[] | null }) => {
             /> */}
           </StyledAccordionSummary>
           {hasDescription ? (
-            <StyledAccordionDetails>
+            <StyledAccordionDetails
+              sx={{ backgroundColor: (t) => t.palette.grey[700] }}>
               <Typography
+                color={"white"}
                 component={"p"}
                 dangerouslySetInnerHTML={{
                   __html: item.description ? item.description : "",
