@@ -51,13 +51,22 @@ export default function EditorMenu({
   onToggleSplit,
 }: TEditorMenuProps) {
   const [alignment, setAlignment] = React.useState("left");
-  const [formats, setFormats] = React.useState(() => ["italic"]);
+  const [formats, setFormats] = React.useState<string[]>(() => []);
   const [splitter, setSplitter] = React.useState(() => ["split"]);
+
   const handleFormat = (
     event: React.MouseEvent<HTMLElement>,
     newFormats: string[]
   ) => {
-    setFormats(newFormats);
+    const arr = [];
+    if (editor?.isActive("bold")) {
+      console.log("hello there 2");
+      arr.push("bold");
+    }
+    if (editor?.isActive("italic")) {
+      arr.push("italic");
+    }
+    setFormats(arr);
   };
 
   const handleAlignment = (
@@ -81,6 +90,64 @@ export default function EditorMenu({
   const onToggleOutdent = () =>
     editor?.chain().focus().liftListItem("listItem").run();
 
+  const [menuToggleButtonFormats, setMenuToggleButtonFormats] = React.useState<
+    string[]
+  >(["bold", "italic", "indent", "outdent"]);
+  // React.useLayoutEffect(() => {
+  //   if (!editor) {
+  //     return undefined;
+  //   }
+  //   setBoldAndItalicFormats((prev) => {
+  //     const newFormats = ["bold", "italic", "left", "right"].filter((format) =>
+  //       editor.isActive(format)
+  //     );
+
+  //     if (JSON.stringify(newFormats) === JSON.stringify(prev)) {
+  //       return prev;
+  //     }
+
+  //     return newFormats;
+  //   });
+  // setBoldAndItalicFormats((prev) => {
+  //   const arr = [];
+
+  //   if (editor?.isActive("bold")) {
+  //     arr.push("bold");
+  //   }
+
+  //   if (editor?.isActive("italic")) {
+  //     arr.push("italic");
+  //   }
+
+  //   if (arr.length === 0) {
+  //     if (prev.length > 0) {
+  //       return arr;
+  //     } else {
+  //       return prev;
+  //     }
+  //   }
+  //   if (arr.length !== prev.length) {
+  //     return arr;
+  //   }
+
+  //   const sameAsPrev = arr.reduce((acc, item) => {
+  //     acc = prev.includes(item);
+  //     return acc;
+  //   }, true);
+
+  //   if (sameAsPrev) {
+  //     return prev;
+  //   } else {
+  //     return arr;
+  //   }
+  // });
+  // });
+
+  console.log({
+    a: editor?.can().liftListItem("listItem"),
+    b: editor?.can().sinkListItem("listItem"),
+  });
+
   return (
     <Paper
       elevation={0}
@@ -93,44 +160,41 @@ export default function EditorMenu({
       }}>
       <StyledToggleButtonGroup
         size="small"
-        value={formats}
-        onChange={handleFormat}
+        value={menuToggleButtonFormats}
         aria-label="text formatting">
         <ToggleButton
           onClick={onToggleBold}
-          value="bold"
+          value={editor?.isActive("bold") ? "bold" : ""}
           aria-label="bold">
           <FormatBoldIcon />
         </ToggleButton>
         <ToggleButton
-          value="italic"
+          value={editor?.isActive("italic") ? "italic" : ""}
           aria-label="italic"
           onClick={onToggleItalic}>
           <FormatItalicIcon />
         </ToggleButton>
-      </StyledToggleButtonGroup>
-      <Divider
-        flexItem
-        orientation="vertical"
-        sx={{ mx: 0.5, my: 1 }}
-      />
-      <StyledToggleButtonGroup
-        size="small"
-        value={alignment}
-        exclusive
-        onChange={handleAlignment}
-        aria-label="text alignment">
+
+        <Divider
+          flexItem
+          orientation="vertical"
+          sx={{ mx: 0.5, my: 1 }}
+        />
+
         <ToggleButton
-          value="right"
-          aria-label="right aligned"
-          onClick={onToggleIndent}>
-          <FormatIndentIncreaseIcon />
-        </ToggleButton>
-        <ToggleButton
-          value="left"
-          aria-label="left aligned"
+          value={editor?.can().liftListItem("listItem") ? "" : "outdent"}
+          disabled={!editor?.can().liftListItem("listItem")}
+          aria-label="Outdent"
           onClick={onToggleOutdent}>
           <FormatIndentDecreaseIcon />
+        </ToggleButton>
+
+        <ToggleButton
+          value={editor?.can().sinkListItem("listItem") ? "" : "indent"}
+          disabled={!editor?.can().sinkListItem("listItem")}
+          aria-label="Indent"
+          onClick={onToggleIndent}>
+          <FormatIndentIncreaseIcon />
         </ToggleButton>
       </StyledToggleButtonGroup>
 
@@ -149,6 +213,7 @@ export default function EditorMenu({
           <VerticalSplitIcon />
         </ToggleButton>
       </StyledToggleButtonGroup>
+      {editor?.can().liftListItem("listItem") ? "nasim" : "siam"}
     </Paper>
   );
 }
