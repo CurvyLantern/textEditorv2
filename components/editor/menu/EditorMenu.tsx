@@ -143,10 +143,10 @@ export default function EditorMenu({
   // });
   // });
 
-  console.log({
-    a: editor?.can().liftListItem("listItem"),
-    b: editor?.can().sinkListItem("listItem"),
-  });
+  // console.log({
+  //   a: editor?.can().liftListItem("listItem"),
+  //   b: editor?.can().sinkListItem("listItem"),
+  // });
 
   return (
     <Paper
@@ -213,7 +213,6 @@ export default function EditorMenu({
           <VerticalSplitIcon />
         </ToggleButton>
       </StyledToggleButtonGroup>
-      {editor?.can().liftListItem("listItem") ? "nasim" : "siam"}
     </Paper>
   );
 }

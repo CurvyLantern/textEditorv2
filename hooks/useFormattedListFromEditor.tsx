@@ -1,11 +1,7 @@
-import BaseEditor from "@/components/editor/BaseEditor";
-import { Accordion } from "@/components/ui/Accordion";
-import { Box, Container, Stack } from "@mui/material";
-import { JSONContent, generateJSON, generateHTML } from "@tiptap/react";
+import { JSONContent, generateHTML } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useMemo, useState } from "react";
-import { arrayBuffer } from "stream/consumers";
 
+import { useMemo, useState } from "react";
 export type TProcessedNodeObj = {
   title: string;
   context: "info" | "cave";
@@ -209,64 +205,19 @@ const converter = (obj: any) => {
   const temp = formatBulletList(obj);
   return temp;
 };
-const organizedRecursion = (item: any[], obj: any = {}) => {
-  if (!item) return obj;
-  obj.title = item[0];
-  obj.type = "item";
-  // for (const subItem of item.slice(1, item.length)) {
-  //   if (Array.isArray(subItem)) {
-  //     obj.type = "group";
-  //     obj.items = subItem.map((childItem) => {
-  //       const items = organizedRecursion(childItem);
-  //       return items;
-  //     });
-  //   } else {
-  //     let prevDescription =
-  //       typeof obj.description === "string" ? obj.description : "";
-  //     // obj.description = `${prevDescription} ${subItem}`;
-  //     obj.description = [prevDescription, subItem].join(" ");
-  //   }
-  // }
+const useFormattedListFromEditor = () => {
+  const [json, setJson] = useState<JSONContent | null>(null);
+  const formattedNestedList = useMemo(() => {
+    if (!json) return null;
+    const formattedJson = Array.isArray(json.content) && json.content[0];
+    return converter(formattedJson);
+  }, [json]);
 
-  return obj;
-};
-const HomePage = () => {
-  // const [json, setJson] = useState<JSONContent>();
-  // const [counter, setCounter] = useState(0);
-  // const formattedNestedList = useMemo(() => {
-  //   if (!json) return null;
-  //   setCounter((p) => p + 1);
-  //   const formattedJson = Array.isArray(json.content) && json.content[0];
-  //   return converter(formattedJson);
-  // }, [json]);
-
-  return (
-    <Box sx={{ py: (t) => t.spacing(5) }}>
-      <Container maxWidth={"lg"}>
-        <Stack>
-          <Stack
-            spacing={5}
-            direction={{
-              md: "row",
-              xs: "column",
-            }}>
-            <BaseEditor />
-            {/* <Box sx={{ flex: 1 }}>
-          
-          </Box> */}
-          </Stack>
-          {/* <Box
-            component={"pre"}
-            sx={{
-              fontSize: 10,
-            }}>
-            <code>{JSON.stringify(formattedNestedList, null, 2)}</code>
-          </Box> */}
-        </Stack>
-        {/* {JSON.stringify(organizedNestedList, null, 2)} */}
-      </Container>
-    </Box>
+  const returnObj = useMemo(
+    () => ({ setJson, formattedNestedList }),
+    [formattedNestedList]
   );
+  return returnObj;
 };
 
-export default HomePage;
+export default useFormattedListFromEditor;

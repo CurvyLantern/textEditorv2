@@ -14,6 +14,7 @@ export const StyledAccordion = styled((props: AccordionProps) => (
     disableGutters
     elevation={0}
     square
+    defaultExpanded
     {...props}
   />
 ))(({ theme }) => ({

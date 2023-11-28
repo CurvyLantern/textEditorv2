@@ -1,33 +1,18 @@
+import useFormattedListFromEditor from "@/hooks/useFormattedListFromEditor";
+import { Box, Stack } from "@mui/material";
+import _TaskList from "@tiptap/extension-task-list";
 import {
-  useEditor,
   EditorContent,
   JSONContent,
-  generateJSON,
   generateHTML,
-  FloatingMenu,
+  useEditor,
 } from "@tiptap/react";
-import TaskItem from "@tiptap/extension-task-item";
-import _TaskList from "@tiptap/extension-task-list";
+import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  IconBold,
-  IconBoldOff,
-  IconItalic,
-  IconIndentDecrease,
-  IconIndentIncrease,
-} from "@tabler/icons-react";
-import {
-  Button,
-  Popover,
-  Stack,
-  TextField,
-  TextareaAutosize,
-  Typography,
-  Box,
-  Collapse,
-} from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
+import { Accordion } from "../ui/Accordion";
 import EditorMenu from "./menu/EditorMenu";
+import { Transaction } from "@tiptap/pm/state";
 const TaskList = _TaskList.extend({
   addKeyboardShortcuts() {
     return {
@@ -48,57 +33,69 @@ const genHtml = (json: JSONContent) =>
       ])
     : "";
 
-const BaseEditor = ({
-  onUpdate,
-  children,
-}: {
-  children: React.ReactNode;
-  onUpdate: (str: string, json: JSONContent) => void;
-}) => {
-  const editor = useEditor({
-    autofocus: "start",
-    onUpdate: (param) => {
-      const json = param.editor.getJSON();
-      onUpdate(JSON.stringify(json, null, 2), json);
-      if (editor?.isActive("bulletList")) {
-        return;
-      } else {
-        return editor?.chain().focus().toggleBulletList().run();
-      }
+const extensions = [
+  StarterKit.configure({
+    bulletList: {
+      keepMarks: true,
+      keepAttributes: true,
+      HTMLAttributes: {
+        class: "group",
+      },
     },
-    extensions: [
-      StarterKit.configure({
-        bulletList: {
-          keepMarks: true,
-          keepAttributes: true,
-          HTMLAttributes: {
-            class: "group",
-          },
-        },
-        listItem: {
-          HTMLAttributes: {
-            class: "item",
-          },
-        },
-      }),
-    ],
-    content: ``,
-  });
+    listItem: {
+      HTMLAttributes: {
+        class: "item",
+      },
+    },
+  }),
+];
+const BaseEditor = ({ defaultContent = "" }: { defaultContent?: string }) => {
+  const { setJson, formattedNestedList } = useFormattedListFromEditor();
+  const turnOnBulletListMode = useCallback((editor: Editor) => {
+    if (editor && !editor.isActive("bulletList")) {
+      editor.chain().toggleBulletList().run();
+    }
+  }, []);
+  const editorOnUpdateHandler = useCallback(
+    (editor: Editor) => {
+      const json = editor.getJSON();
+      // const text = param.editor.getText();
+      // const html = param.editor.getHTML();
+      // console.clear();
+      // console.log(JSON.stringify(text), "text");
+      // console.log(html, "html");
+      // console.log(json, "json");
+      setJson(json);
+      turnOnBulletListMode(editor);
+    },
+    [setJson, turnOnBulletListMode]
+  );
+
+  const editor = useEditor(
+    {
+      // autofocus: "end",
+      onCreate: ({ editor }) => {
+        editor.commands.focus("end");
+        turnOnBulletListMode(editor);
+        editorOnUpdateHandler(editor);
+      },
+      onUpdate: ({ editor }) => {
+        const html = editor.getHTML();
+        console.log(html, "html");
+        editorOnUpdateHandler(editor);
+      },
+      extensions,
+      content: defaultContent,
+    },
+    [defaultContent]
+  );
 
   const [showContentBox, setShowContentBox] = useState(true);
 
-  const turnOnBulletListMode = useCallback(() => {
-    if (editor?.isActive("bulletList")) {
-      return;
-    } else {
-      return editor?.chain().focus().toggleBulletList().run();
-    }
-  }, [editor]);
-
-  useEffect(() => {
-    editor?.commands.focus(0);
-    turnOnBulletListMode();
-  }, [editor, turnOnBulletListMode]);
+  // useEffect(() => {
+  //   editor?.commands.focus(0);
+  //   turnOnBulletListMode();
+  // }, [editor, turnOnBulletListMode]);
 
   const onToggleSplit = useCallback(() => {
     setShowContentBox((p) => !p);
@@ -107,6 +104,47 @@ const BaseEditor = ({
   if (!editor) {
     return null;
   }
+
+  const onKeyDownHandler = (evt: React.KeyboardEvent<HTMLDivElement>) => {
+    if (evt.code === "Tab") {
+      if (!editor.isActive("bulletList")) {
+        turnOnBulletListMode(editor);
+      }
+      evt.preventDefault();
+      return;
+    }
+    if (evt.code === "Backspace") {
+      const { selection } = editor.state;
+      if (selection && selection.empty) {
+        const { parentOffset, parent, pos } = selection.$anchor;
+        const { nodeSize, content } = parent;
+        const diff = nodeSize - content.size;
+        if (parentOffset <= 0) {
+          const from = pos - diff;
+          const to = pos;
+          editor.commands.deleteRange({ from, to });
+          evt.preventDefault();
+        }
+      }
+      return;
+    }
+
+    if (evt.code === "Delete") {
+      const { selection } = editor.state;
+      if (selection && selection.empty) {
+        const { parentOffset, parent, pos } = selection.$anchor;
+        const { nodeSize, content } = parent;
+        const diff = nodeSize - content.size;
+        if (parentOffset >= content.size) {
+          const from = pos;
+          const to = from + diff;
+          editor.commands.deleteRange({ from, to });
+          evt.preventDefault();
+          return false;
+        }
+      }
+    }
+  };
 
   return (
     <Box
@@ -117,39 +155,7 @@ const BaseEditor = ({
         p: (t) => t.spacing(2),
         width: "100%",
       }}
-      // className="border-2 border-solid border-black rounded-md min-h-[25rem]"
-      onKeyDown={(evt) => {
-        if (evt.code === "Tab") {
-          if (!editor.isActive("bulletList")) {
-            turnOnBulletListMode();
-          }
-          evt.preventDefault();
-        }
-      }}>
-      {/* <div className="flex items-center gap-5 p-2 border-b-2 editor_menu">
-        <button
-          onClick={}
-          className={editor.isActive("bulletList") ? "is-active" : ""}>
-          <IconBold size={15} />
-        </button>
-        <button
-          onClick={() => editor.commands.toggleBold()}
-          className={editor.isActive("bulletList") ? "is-active" : ""}>
-          <IconItalic size={15} />
-        </button>
-
-        <button
-          onClick={() => editor.chain().focus().sinkListItem("listItem").run()}
-          disabled={!editor.can().sinkListItem("listItem")}>
-          <IconIndentIncrease size={15} />
-        </button>
-        <button
-          onClick={() => editor.chain().focus().liftListItem("listItem").run()}
-          disabled={!editor.can().liftListItem("listItem")}>
-          <IconIndentDecrease size={15} />
-        </button>
-      </div> */}
-
+      onKeyDown={onKeyDownHandler}>
       <EditorMenu
         onToggleSplit={onToggleSplit}
         editor={editor}
@@ -188,7 +194,9 @@ const BaseEditor = ({
               borderColor: (t) => t.palette.grey[200],
               borderRadius: (t) => t.shape.borderRadius,
             }}>
-            {children}
+            <Accordion
+              contents={formattedNestedList ? formattedNestedList : null}
+            />
           </Box>
         ) : null}
       </Stack>

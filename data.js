@@ -812,3 +812,5 @@ const data = [
         reference: ['noReferenceNeeded']
     }
 ]
+
+export default data
